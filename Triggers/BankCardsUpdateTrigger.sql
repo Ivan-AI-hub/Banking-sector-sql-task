@@ -10,18 +10,32 @@ AS
 BEGIN
 	 IF UPDATE(Balance)
 	 BEGIN
-		 DECLARE @AccountBalance MONEY, @CardsBalance MONEY
+	     
+		 DECLARE @AccountBalance MONEY, @CardsBalance MONEY, @CurrentAccountID INT
 
-		 SELECT @AccountBalance = Accounts.Balance, @CardsBalance = SUM(BankCards.Balance)
-		 FROM Accounts JOIN BankCards ON Accounts.Id = BankCards.AccountId
-		 WHERE Accounts.Id IN ( Select AccountId from inserted)
-		 GROUP BY Accounts.Balance
+		 DECLARE cur CURSOR FOR 
+		 SELECT AccountId
+		 FROM inserted
 
-		 IF @CardsBalance > @AccountBalance
-		  BEGIN
+	     OPEN cur
+	     FETCH NEXT FROM cur INTO @CurrentAccountID
+	     WHILE @@FETCH_STATUS = 0
+	     BEGIN
+			SELECT @AccountBalance = Accounts.Balance, @CardsBalance = SUM(BankCards.Balance)
+			FROM Accounts JOIN BankCards ON Accounts.Id = BankCards.AccountId
+			WHERE Accounts.Id = @CurrentAccountID
+			GROUP BY Accounts.Balance
+
+			IF @CardsBalance > @AccountBalance
+			BEGIN
 			   ROLLBACK TRANSACTION
-			   PRINT 'There are not enough funds on the account. It is not possible to increase the funds on the card.';
-		  END
+			   PRINT 'There are not enough funds on the account with id='+ CONVERT(NVARCHAR, @CurrentAccountID) +'. It is not possible to increase the funds on the card.';
+			END
+		  	FETCH NEXT FROM cur INTO @CurrentAccountID
+	     END
+   	     
+	     CLOSE cur
+	     DEALLOCATE cur
 	  END
 END
 Go
@@ -32,8 +46,8 @@ GROUP BY Accounts.Id, BankCards.Id,  Accounts.Balance
 Go 
 
 Update BankCards
-Set Balance = 300
-Where Id = 1001
+Set Balance = 100
+Where Id < 1010
 GO
 
 SELECT Accounts.Id, BankCards.Id, Sum(BankCards.Balance) AS 'card balance', Accounts.Balance
