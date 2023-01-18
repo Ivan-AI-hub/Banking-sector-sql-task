@@ -35,7 +35,7 @@ BEGIN
 
 		IF (SELECT Accounts.Balance - SUM(BankCards.Balance)
 			FROM Accounts JOIN BankCards ON Accounts.Id = AccountId 
-			WHERE Accounts.Id = @AccountId and BankCards.Id = @BankCardId
+			WHERE Accounts.Id = @AccountId
 			GROUP BY Accounts.Balance) < 0
 		BEGIN
 			ROLLBACK TRANSACTION
@@ -46,15 +46,13 @@ BEGIN
 END;
 Go
 
-SELECT Accounts.Id, BankCards.Id, Sum(BankCards.Balance) AS 'card balance', Accounts.Balance
+SELECT Accounts.Id, BankCards.Id, BankCards.Balance AS 'card balance', Accounts.Balance AS 'Account balance'
 FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
-GROUP BY Accounts.Id, BankCards.Id,  Accounts.Balance
 Go 
 
 EXEC TransferMoney 45028, 1001, 2001;
 Go
 
-SELECT Accounts.Id, BankCards.Id, Sum(BankCards.Balance) AS 'card balance', Accounts.Balance
+SELECT Accounts.Id, BankCards.Id, BankCards.Balance AS 'card balance', Accounts.Balance AS 'Account balance'
 FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
-GROUP BY Accounts.Id, BankCards.Id,  Accounts.Balance
 Go 
