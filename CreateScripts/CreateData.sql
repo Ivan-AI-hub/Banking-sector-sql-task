@@ -1,7 +1,6 @@
 Use BankingSector
 go
 
---Типы товаров
 delete Clients_SocialStatuses
 delete SocialStatuses
 delete BankCards
@@ -12,14 +11,14 @@ delete Cities
 delete Banks
 go
 
-DECLARE @OneSideLength Int, @ManySideLength Int, @Iterator Int
-Set @OneSideLength = 500
-Set @ManySideLength = 1000
+DECLARE @OneSideDataCount Int, @ManySideDataCount Int, @Iterator Int
+Set @OneSideDataCount = 500
+Set @ManySideDataCount = 1000
  
 
-begin /*Fill One side tables table*/
+begin /*Fill One side tables*/
 	Set @Iterator = 0;
-	WHILE @Iterator < @OneSideLength
+	WHILE @Iterator < @OneSideDataCount
 		BEGIN
 			Insert into Banks(Name) values('Bank' + str(@Iterator))
 			Insert into Cities(Name) values('City' + str(@Iterator))
@@ -29,9 +28,9 @@ begin /*Fill One side tables table*/
 		END;
 end
 
-begin /*Fill Many side tables table*/
+begin /*Fill Many side tables*/
 	Set @Iterator = 0;
-	WHILE @Iterator < @ManySideLength
+	WHILE @Iterator < @ManySideDataCount
 		BEGIN
 			--Fill Cities_Banks table
 			insert into Cities_Banks(BankId, CitieId) 

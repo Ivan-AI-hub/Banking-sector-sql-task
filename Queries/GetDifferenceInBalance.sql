@@ -9,3 +9,4 @@ SELECT
 FROM BankCards
 	RIGHT JOIN Accounts on Accounts.Id = AccountId
 GROUP BY Accounts.Id, Accounts.Balance
+Having Accounts.Balance != SUM(BankCards.Balance)

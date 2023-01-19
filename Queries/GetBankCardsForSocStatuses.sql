@@ -1,4 +1,5 @@
 use BankingSector
+GO
 
 --With group by
 SELECT 
