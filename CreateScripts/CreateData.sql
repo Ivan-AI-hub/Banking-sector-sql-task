@@ -1,7 +1,6 @@
 Use BankingSector
 go
 
-delete Clients_SocialStatuses
 delete SocialStatuses
 delete BankCards
 delete Accounts
@@ -23,7 +22,6 @@ begin /*Fill One side tables*/
 			Insert into Banks(Name) values('Bank' + str(@Iterator))
 			Insert into Cities(Name) values('City' + str(@Iterator))
 			Insert into SocialStatuses(Name) values('Status' + str(@Iterator))
-			Insert into Clients(FirstName, LastName) values('FirstName' + str(@Iterator), 'LastName' + str(@Iterator))
 			Set @Iterator = @Iterator + 1
 		END;
 end
@@ -39,10 +37,9 @@ begin /*Fill Many side tables*/
 					(SELECT TOP 1 Id FROM Cities order BY NEWID()))
 			------------------------------------------
 
-			--Fill Clients_SocialStatuses table
-			insert into Clients_SocialStatuses(ClientId, SocialStatusId)
-			values 
-			((SELECT TOP 1 Id FROM Clients order BY NEWID()),
+			--Fill Clients table
+			Insert into Clients(FirstName, LastName, SocialStatusId) 
+			values('FirstName' + str(@Iterator), 'LastName' + str(@Iterator),
 			(SELECT TOP 1 Id FROM SocialStatuses order BY NEWID()))
 			-------------------------------------------			
 
