@@ -1,42 +1,40 @@
 USE BankingSector;
 GO
 
-DROP TRIGGER BankCardsValidateUpdateTrigger
+DROP TRIGGER BankCardsValidateTrigger
 GO
 
-CREATE TRIGGER BankCardsValidateUpdateTrigger ON BankCards
-FOR UPDATE
+
+CREATE TRIGGER BankCardsValidateTrigger ON BankCards
+FOR UPDATE, INSERT
 AS
-BEGIN
-	 IF UPDATE(Balance)
-	 BEGIN
-	     
-		 DECLARE @AccountBalance MONEY, @CardsBalance MONEY, @CurrentAccountID INT
+BEGIN     
+	DECLARE @AccountBalance MONEY, @CardsBalance MONEY, @CurrentAccountID INT
 
-		 DECLARE cur CURSOR FOR 
-		 SELECT AccountId
-		 FROM inserted
+	DECLARE cur CURSOR FOR 
+	SELECT AccountId
+	FROM inserted
 
-	     OPEN cur
-	     FETCH NEXT FROM cur INTO @CurrentAccountID
-	     WHILE @@FETCH_STATUS = 0
-	     BEGIN
-			SELECT @AccountBalance = Accounts.Balance, @CardsBalance = SUM(BankCards.Balance)
-			FROM Accounts JOIN BankCards ON Accounts.Id = BankCards.AccountId
-			WHERE Accounts.Id = @CurrentAccountID
-			GROUP BY Accounts.Balance
+	OPEN cur
+	FETCH NEXT FROM cur INTO @CurrentAccountID
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
 
-			IF @CardsBalance > @AccountBalance
-			BEGIN
-			   ROLLBACK TRANSACTION
-			   PRINT 'There are not enough funds on the account with id='+ CONVERT(NVARCHAR, @CurrentAccountID) +'. It is not possible to increase the funds on the card.';
-			END
-		  	FETCH NEXT FROM cur INTO @CurrentAccountID
-	     END
-   	     
-	     CLOSE cur
-	     DEALLOCATE cur
-	  END
+	SELECT @AccountBalance = Accounts.Balance, @CardsBalance = SUM(BankCards.Balance)
+	FROM Accounts JOIN BankCards ON Accounts.Id = BankCards.AccountId
+	WHERE Accounts.Id = @CurrentAccountID
+	GROUP BY Accounts.Balance
+
+	IF @CardsBalance > @AccountBalance
+	BEGIN
+	   ROLLBACK TRANSACTION
+	   PRINT 'There are not enough funds on the account with id='+ CONVERT(NVARCHAR, @CurrentAccountID) +'. It is not possible to increase the funds on the card.';
+	END
+	 	FETCH NEXT FROM cur INTO @CurrentAccountID
+	   END
+   	   
+	   CLOSE cur
+	   DEALLOCATE cur
 END
 Go
 

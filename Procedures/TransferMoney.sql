@@ -38,7 +38,7 @@ BEGIN
 			WHERE Accounts.Id = @AccountId
 			GROUP BY Accounts.Balance) < 0
 		BEGIN
-			ROLLBACK TRANSACTION
+			ROLLBACK TRANSACTION;
 			THROW 50103, 'There are not enough funds on the account', 1;
 		END;
 
@@ -46,13 +46,15 @@ BEGIN
 END;
 Go
 
-SELECT Accounts.Id, BankCards.Id, BankCards.Balance AS 'card balance', Accounts.Balance AS 'Account balance'
+SELECT Accounts.Id AS 'AccounId', BankCards.Id AS 'CardID', BankCards.Balance AS 'card balance', Accounts.Balance AS 'Account balance'
 FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
+WHERE AccountId = 1
 Go 
 
-EXEC TransferMoney 45028, 1001, 2001;
+EXEC TransferMoney 1, 1, 1;
 Go
 
-SELECT Accounts.Id, BankCards.Id, BankCards.Balance AS 'card balance', Accounts.Balance AS 'Account balance'
+SELECT Accounts.Id AS 'AccounId', BankCards.Id AS 'CardID', BankCards.Balance AS 'card balance', Accounts.Balance AS 'Account balance'
 FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
+WHERE AccountId = 1
 Go 
