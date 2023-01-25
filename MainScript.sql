@@ -181,15 +181,15 @@ begin /*Fill Many side tables*/
 			Set @Iterator = @Iterator + 1
 		END;
 END;
-go
+GO
 
 --2 Second task
 --Show me a list of banks that have branches in city X (choose one of the cities)
-SELECT Banks.Id AS 'BankId', Banks.Name AS 'BankName'
+SELECT DISTINCT Banks.Id AS 'BankId', Banks.Name AS 'BankName'
 FROM Cities
 	JOIN CitiesBanks ON Cities.Id = CityId
 	JOIN Banks ON Banks.Id = BankId
-Where Cities.Id = 1
+Where Cities.Name = 'City         0'
 GO
 
 --3 Third task
