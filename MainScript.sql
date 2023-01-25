@@ -261,10 +261,8 @@ BEGIN
 	IF NOT EXISTS 
 	( 
 	  SELECT 1 
-	  FROM SocialStatuses AS ss
-	  JOIN Clients on ss.Id = SocialStatusId
-	  JOIN Accounts on Accounts.ClientId = Clients.Id
-	  WHERE ss.Id = @SocialStatusId
+	  FROM Accounts
+		JOIN Clients on (Accounts.ClientId = Clients.Id and SocialStatusId = @SocialStatusId)
 	)
 	BEGIN
 		THROW 50101, 'The status has no linked accounts', 1;
@@ -272,10 +270,8 @@ BEGIN
 
 	UPDATE Accounts
 	Set Balance = Balance + 10
-	FROM SocialStatuses AS ss
-		JOIN Clients on ss.Id = Clients.SocialStatusId
-		JOIN Accounts on Accounts.ClientId = Clients.Id
-	Where ss.Id = @SocialStatusId
+	FROM Accounts
+		JOIN Clients on (Accounts.ClientId = Clients.Id and SocialStatusId = @SocialStatusId)
 END;
 Go
 
@@ -284,18 +280,15 @@ Declare @TestSocStatusId INT
 SET @TestSocStatusId = 1
 
 Select acc.Id AS 'AccountId', acc.Balance
-FROM SocialStatuses AS ss
-	JOIN Clients on ss.Id = SocialStatusId
-	JOIN Accounts AS acc on acc.ClientId = Clients.Id
-Where ss.Id = @TestSocStatusId
+FROM Accounts AS acc
+	JOIN Clients on (SocialStatusId = @TestSocStatusId and acc.ClientId = Clients.Id)
+
 
 EXEC AddMoneyToSocStatus @TestSocStatusId;
 
 Select acc.Id AS 'AccountId', acc.Balance
-FROM SocialStatuses AS ss
-	JOIN Clients on ss.Id = SocialStatusId
-	JOIN Accounts AS acc on acc.ClientId = Clients.Id
-Where ss.Id = @TestSocStatusId
+FROM Accounts AS acc
+	JOIN Clients on (SocialStatusId = @TestSocStatusId and acc.ClientId = Clients.Id)
 Go
 
 --7 Seventh task
