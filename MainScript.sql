@@ -19,14 +19,14 @@ Create table  Cities
 );
 go
 
-Create table  Cities_Banks
+Create table  CitiesBanks
 (
 	Id int primary key identity(1,1),
 	BankId int not null,
-	CitieId int not null,
+	CityId int not null,
 
-	CONSTRAINT FK_Cities_Banks_To_Banks FOREIGN KEY (BankId)  REFERENCES Banks (Id) On delete cascade,
-	CONSTRAINT FK_Cities_Banks_To_Cities FOREIGN KEY (CitieId)  REFERENCES Cities (Id) On delete cascade
+	CONSTRAINT FK_CitiesBanks_To_Banks FOREIGN KEY (BankId)  REFERENCES Banks (Id) On delete cascade,
+	CONSTRAINT FK_CitiesBanks_To_Cities FOREIGN KEY (CityId)  REFERENCES Cities (Id) On delete cascade
 );
 go
 
@@ -151,8 +151,8 @@ begin /*Fill Many side tables*/
 	Set @Iterator = 0;
 	WHILE @Iterator < @ManySideDataCount
 		BEGIN
-			--Fill Cities_Banks table
-			insert into Cities_Banks(BankId, CitieId) 
+			--Fill CitiesBanks table
+			insert into CitiesBanks(BankId, CityId) 
 					values
 					((SELECT TOP 1 Id FROM Banks order BY NEWID()),
 					(SELECT TOP 1 Id FROM Cities order BY NEWID()))
@@ -187,7 +187,7 @@ go
 --Show me a list of banks that have branches in city X (choose one of the cities)
 SELECT Banks.Id AS 'BankId', Banks.Name AS 'BankName'
 FROM Cities
-	JOIN Cities_Banks ON Cities.Id = CitieId
+	JOIN CitiesBanks ON Cities.Id = CityId
 	JOIN Banks ON Banks.Id = BankId
 Where Cities.Id = 1
 GO
