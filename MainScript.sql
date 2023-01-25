@@ -294,11 +294,13 @@ Go
 --7 Seventh task
 --Get a list of available funds for each client.
 SELECT 
-	acc.Id AS 'Account id',
-	IsNull(acc.Balance - SUM(bc.Balance), acc.Balance) AS 'Free balance'
+	cl.Id AS 'ClientId',
+	COUNT(acc.Id) AS 'Accounts count',
+	IsNull(IsNull(SUM(acc.Balance) - SUM(bc.Balance), SUM(acc.Balance)),0) AS 'FreeBalance'
 FROM BankCards AS bc
 	RIGHT JOIN Accounts AS acc on acc.Id = AccountId
-GROUP BY acc.Id, acc.Balance
+	RIGHT JOIN Clients as cl on cl.Id = acc.ClientId
+GROUP BY cl.Id, cl.FirstName, cl.LastName
 GO
 
 --8 Eighth task
