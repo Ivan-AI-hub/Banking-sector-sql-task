@@ -84,8 +84,9 @@ BEGIN
 	 BEGIN
 		 DECLARE @Balance MONEY, @CardsBalance MONEY
 
-		 SELECT @Balance = inserted.Balance, @CardsBalance = SUM(BankCards.Balance)
-		 FROM inserted JOIN BankCards ON inserted.Id = BankCards.AccountId
+		 SELECT @Balance = inserted.Balance, @CardsBalance = SUM(bc.Balance)
+		 FROM inserted 
+		 JOIN BankCards AS bc ON inserted.Id = bc.AccountId
 		 GROUP BY inserted.Balance
 
 		 IF @CardsBalance > @Balance
@@ -112,10 +113,11 @@ BEGIN
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
 
-	SELECT @AccountBalance = Accounts.Balance, @CardsBalance = SUM(BankCards.Balance)
-	FROM Accounts JOIN BankCards ON Accounts.Id = BankCards.AccountId
-	WHERE Accounts.Id = @CurrentAccountID
-	GROUP BY Accounts.Balance
+	SELECT @AccountBalance = acc.Balance, @CardsBalance = SUM(bc.Balance)
+	FROM Accounts AS acc
+	JOIN BankCards AS bc ON acc.Id = AccountId
+	WHERE acc.Id = @CurrentAccountID
+	GROUP BY acc.Balance
 
 	IF @CardsBalance > @AccountBalance
 	BEGIN
@@ -185,38 +187,38 @@ GO
 
 --2 Second task
 --Show me a list of banks that have branches in city X (choose one of the cities)
-SELECT DISTINCT Banks.Id AS 'BankId', Banks.Name AS 'BankName'
+SELECT DISTINCT b.Id AS 'BankId', b.Name AS 'BankName'
 FROM Cities
 	JOIN CitiesBanks ON Cities.Id = CityId
-	JOIN Banks ON Banks.Id = BankId
+	JOIN Banks As b ON b.Id = BankId
 Where Cities.Name = 'City         0'
 GO
 
 --3 Third task
 --Get a list of cards with the name of the owner, the balance and the name of the bank
 SELECT 
-	   BankCards.Id AS 'Card id',
-	   BankCards.Balance AS 'Balance',
-	   Clients.FirstName + ' ' + Clients.LastName AS 'Client name',
-	   Banks.Name AS 'Bank name'
-FROM BankCards
+	   bc.Id AS 'Card id',
+	   bc.Balance AS 'Balance',
+	   cl.FirstName + ' ' + cl.LastName AS 'Client name',
+	   b.Name AS 'Bank name'
+FROM BankCards AS bc
 	JOIN Accounts on Accounts.Id = AccountId
-	JOIN Clients on Clients.Id = ClientId
-	JOIN Banks on Banks.Id = BankId
+	JOIN Clients AS cl on cl.Id = ClientId
+	JOIN Banks AS b on b.Id = BankId
 GO
 
 --4 Fourth task
 --Show a list of bank accounts whose balance does not match the amount of the balance on the cards.
 SELECT 
-	   Accounts.Id AS 'Account id',
-	   Accounts.Balance As 'Account balance',
-	   COUNT(BankCards.Balance) As 'Cards count',
-	   IsNull(SUM(BankCards.Balance), 0) AS 'Cards balance',
-	   IsNull(Accounts.Balance - SUM(BankCards.Balance), Accounts.Balance) AS 'Free balance'
-FROM BankCards
-	RIGHT JOIN Accounts on Accounts.Id = AccountId
-GROUP BY Accounts.Id, Accounts.Balance
-Having Accounts.Balance != IsNull(SUM(BankCards.Balance), 0)
+	   acc.Id AS 'Account id',
+	   acc.Balance As 'Account balance',
+	   COUNT(bc.Balance) As 'Cards count',
+	   IsNull(SUM(bc.Balance), 0) AS 'Cards balance',
+	   IsNull(acc.Balance - SUM(bc.Balance), acc.Balance) AS 'Free balance'
+FROM BankCards AS bc
+	RIGHT JOIN Accounts AS acc on acc.Id = AccountId
+GROUP BY acc.Id, acc.Balance
+Having acc.Balance != IsNull(SUM(bc.Balance), 0)
 GO
 
 --5 Fifth task
@@ -224,25 +226,26 @@ GO
 
 --With group by
 SELECT 
-	   SocialStatuses.Id AS 'StatusId',
-	   SocialStatuses.Name AS 'StatusName',
-	   COUNT(BankCards.Balance) AS 'Cards count'
-From BankCards
-	   RIGHT JOIN Accounts on Accounts.Id = BankCards.AccountId
+	   ss.Id AS 'StatusId',
+	   ss.Name AS 'StatusName',
+	   COUNT(bc.Balance) AS 'Cards count'
+From BankCards AS bc
+	   RIGHT JOIN Accounts on Accounts.Id = bc.AccountId
 	   RIGHT JOIN Clients on Clients.Id = Accounts.ClientId
-	   RIGHT JOIN SocialStatuses on SocialStatuses.Id = SocialStatusId
-GROUP BY SocialStatuses.Id, SocialStatuses.Name
+	   RIGHT JOIN SocialStatuses AS ss on ss.Id = SocialStatusId
+GROUP BY ss.Id, ss.Name
 ORDER BY [StatusId]
 go
 
 --With subquery
 SELECT 
-	   SocialStatuses.Id AS 'StatusId',
-	   SocialStatuses.Name AS 'StatusName',
-	   (SELECT COUNT(BankCards.Balance) From BankCards
-	   JOIN Accounts on Accounts.Id = BankCards.AccountId
-	   JOIN Clients on (Clients.Id = Accounts.ClientId and SocialStatuses.Id = SocialStatusId)) AS 'Cards count'
-FROM SocialStatuses
+	   ss.Id AS 'StatusId',
+	   ss.Name AS 'StatusName',
+	   (SELECT COUNT(bc.Balance) 
+	   From BankCards AS bc
+	   JOIN Accounts AS acc on acc.Id = bc.AccountId
+	   JOIN Clients on (Clients.Id = acc.ClientId and ss.Id = SocialStatusId)) AS 'Cards count'
+FROM SocialStatuses AS ss
 GO
 
 --6 Sixth task
@@ -258,10 +261,10 @@ BEGIN
 	IF NOT EXISTS 
 	( 
 	  SELECT 1 
-	  FROM SocialStatuses
-	  JOIN Clients on SocialStatuses.Id = Clients.SocialStatusId
+	  FROM SocialStatuses AS ss
+	  JOIN Clients on ss.Id = SocialStatusId
 	  JOIN Accounts on Accounts.ClientId = Clients.Id
-	  WHERE SocialStatuses.Id = @SocialStatusId
+	  WHERE ss.Id = @SocialStatusId
 	)
 	BEGIN
 		THROW 50101, 'The status has no linked accounts', 1;
@@ -269,10 +272,10 @@ BEGIN
 
 	UPDATE Accounts
 	Set Balance = Balance + 10
-	FROM SocialStatuses
-		JOIN Clients on SocialStatuses.Id = Clients.SocialStatusId
+	FROM SocialStatuses AS ss
+		JOIN Clients on ss.Id = Clients.SocialStatusId
 		JOIN Accounts on Accounts.ClientId = Clients.Id
-	Where SocialStatuses.Id = @SocialStatusId
+	Where ss.Id = @SocialStatusId
 END;
 Go
 
@@ -280,29 +283,29 @@ Go
 Declare @TestSocStatusId INT
 SET @TestSocStatusId = 1
 
-Select Accounts.Id AS 'AccountId', Accounts.Balance
-FROM SocialStatuses
-	JOIN Clients on SocialStatuses.Id = Clients.SocialStatusId
-	JOIN Accounts on Accounts.ClientId = Clients.Id
-Where SocialStatuses.Id = @TestSocStatusId
+Select acc.Id AS 'AccountId', acc.Balance
+FROM SocialStatuses AS ss
+	JOIN Clients on ss.Id = SocialStatusId
+	JOIN Accounts AS acc on acc.ClientId = Clients.Id
+Where ss.Id = @TestSocStatusId
 
 EXEC AddMoneyToSocStatus @TestSocStatusId;
 
-Select Accounts.Id AS 'AccountId', Accounts.Balance
-FROM SocialStatuses
-	JOIN Clients on SocialStatuses.Id = Clients.SocialStatusId
-	JOIN Accounts on Accounts.ClientId = Clients.Id
-Where SocialStatuses.Id = @TestSocStatusId
+Select acc.Id AS 'AccountId', acc.Balance
+FROM SocialStatuses AS ss
+	JOIN Clients on ss.Id = SocialStatusId
+	JOIN Accounts AS acc on acc.ClientId = Clients.Id
+Where ss.Id = @TestSocStatusId
 Go
 
 --7 Seventh task
 --Get a list of available funds for each client.
 SELECT 
-	Accounts.Id AS 'Account id',
-	IsNull(Accounts.Balance - SUM(BankCards.Balance), Accounts.Balance) AS 'Free balance'
-FROM BankCards
-	RIGHT JOIN Accounts on Accounts.Id = AccountId
-GROUP BY Accounts.Id, Accounts.Balance
+	acc.Id AS 'Account id',
+	IsNull(acc.Balance - SUM(bc.Balance), acc.Balance) AS 'Free balance'
+FROM BankCards AS bc
+	RIGHT JOIN Accounts AS acc on acc.Id = AccountId
+GROUP BY acc.Id, acc.Balance
 GO
 
 --8 Eighth task
@@ -337,10 +340,11 @@ BEGIN
 		Set Balance = Balance + @MoneyCount
 		Where Id = @BankCardId
 
-		IF (SELECT Accounts.Balance - SUM(BankCards.Balance)
-			FROM Accounts JOIN BankCards ON Accounts.Id = AccountId 
-			WHERE Accounts.Id = @AccountId
-			GROUP BY Accounts.Balance) < 0
+		IF (SELECT acc.Balance - SUM(bc.Balance)
+			FROM Accounts AS acc
+			JOIN BankCards AS bc ON acc.Id = AccountId 
+			WHERE acc.Id = @AccountId
+			GROUP BY acc.Balance) < 0
 		BEGIN
 			ROLLBACK TRANSACTION;
 			THROW 50103, 'There are not enough funds on the account', 1;
@@ -356,13 +360,16 @@ SET @TestAccountId = 1
 SET @TestBankCardId = 1
 SET @TestBalance = 1
 
-SELECT Accounts.Id AS 'AccounId', BankCards.Id AS 'CardID', BankCards.Balance AS 'Card balance', Accounts.Balance AS 'Account balance'
-FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
-WHERE AccountId = @TestAccountId and BankCards.Id = @TestBankCardId
+SELECT acc.Id AS 'AccounId', bc.Id AS 'CardID', bc.Balance AS 'Card balance', acc.Balance AS 'Account balance'
+FROM Accounts AS acc
+JOIN BankCards AS bc
+ON acc.Id = AccountId
+WHERE AccountId = @TestAccountId and bc.Id = @TestBankCardId
 
 EXEC TransferMoney @TestAccountId, @TestBankCardId, @TestBalance;
 
-SELECT Accounts.Id AS 'AccounId', BankCards.Id AS 'CardID', BankCards.Balance AS 'Card balance', Accounts.Balance AS 'Account balance'
-FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
-WHERE AccountId = @TestAccountId  and BankCards.Id = @TestBankCardId
+SELECT acc.Id AS 'AccounId', bc.Id AS 'CardID', bc.Balance AS 'Card balance', acc.Balance AS 'Account balance'
+FROM Accounts AS acc
+JOIN BankCards AS bc ON acc.Id = AccountId
+WHERE AccountId = @TestAccountId and bc.Id = @TestBankCardId
 GO
