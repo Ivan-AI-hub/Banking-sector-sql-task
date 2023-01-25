@@ -368,3 +368,88 @@ FROM Accounts AS acc
 JOIN BankCards AS bc ON acc.Id = AccountId
 WHERE AccountId = @TestAccountId and bc.Id = @TestBankCardId
 GO
+
+--Accounts update trigger test
+--wrong
+Declare @TestAccountId INT
+SET @TestAccountId = (SELECT TOP(1) acc.Id 
+					  FROM Accounts AS acc
+					  JOIN BankCards on acc.Id = AccountId)
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+
+Update Accounts
+Set Balance = -100
+Where Id = @TestAccountId
+Go 
+
+--successfully
+Declare @TestAccountId INT
+SET @TestAccountId = (SELECT TOP(1) acc.Id 
+					  FROM Accounts AS acc
+					  JOIN BankCards on acc.Id = AccountId)
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+
+Update Accounts
+Set Balance = 10000
+Where Id = @TestAccountId
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+Go 
+
+--BankCards update trigger test
+--successfully
+Declare @TestCardId INT, @TestAccountId INT
+SET @TestCardId = 1
+SET @TestAccountId = (SELECT AccountId FROM BankCards Where Id = @TestCardId)
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+
+Update BankCards
+Set Balance = 0
+Where Id = @TestCardId
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+Go 
+
+--Wrong
+Declare @TestCardId INT, @TestAccountId INT
+SET @TestCardId = 1
+SET @TestAccountId = (SELECT AccountId FROM BankCards Where Id = @TestCardId)
+
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+
+Update BankCards
+Set Balance = 10000
+Where Id = @TestCardId
+GO
+Use master
+GO
+DROP DATABASE BankingSector
+GO
