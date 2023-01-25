@@ -366,9 +366,3 @@ SELECT Accounts.Id AS 'AccounId', BankCards.Id AS 'CardID', BankCards.Balance AS
 FROM Accounts JOIN BankCards ON Accounts.Id = AccountId
 WHERE AccountId = @TestAccountId  and BankCards.Id = @TestBankCardId
 GO
-
-GO
-Use master
-GO
-DROP DATABASE BankingSector
-GO
