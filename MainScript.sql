@@ -197,9 +197,9 @@ GO
 --3 Third task
 --Get a list of cards with the name of the owner, the balance and the name of the bank
 SELECT 
-	   bc.Id AS 'Card id',
+	   bc.Id AS 'CardId',
 	   bc.Balance AS 'Balance',
-	   cl.FirstName + ' ' + cl.LastName AS 'Client name',
+	   cl.FirstName + ' ' + cl.LastName AS 'ClientName',
 	   b.Name AS 'Bank name'
 FROM BankCards AS bc
 	JOIN Accounts on Accounts.Id = AccountId
@@ -228,7 +228,7 @@ GO
 SELECT 
 	   ss.Id AS 'StatusId',
 	   ss.Name AS 'StatusName',
-	   COUNT(bc.Balance) AS 'Cards count'
+	   COUNT(bc.Balance) AS 'CardsCount'
 From BankCards AS bc
 	   RIGHT JOIN Accounts on Accounts.Id = bc.AccountId
 	   RIGHT JOIN Clients on Clients.Id = Accounts.ClientId
@@ -243,8 +243,8 @@ SELECT
 	   ss.Name AS 'StatusName',
 	   (SELECT COUNT(bc.Balance) 
 	   From BankCards AS bc
-	   JOIN Accounts AS acc on acc.Id = bc.AccountId
-	   JOIN Clients on (Clients.Id = acc.ClientId and ss.Id = SocialStatusId)) AS 'Cards count'
+	   RIGHT JOIN Accounts AS acc on acc.Id = bc.AccountId
+	   RIGHT JOIN Clients on (Clients.Id = acc.ClientId and ss.Id = SocialStatusId)) AS 'CardsCount'
 FROM SocialStatuses AS ss
 GO
 
