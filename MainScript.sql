@@ -59,7 +59,8 @@ Create table  Accounts
 	CONSTRAINT FK_Accounts_To_Banks FOREIGN KEY (BankId)  REFERENCES Banks (Id) On delete cascade,
 	CONSTRAINT FK_Accounts_To_Cities FOREIGN KEY (ClientId)  REFERENCES Clients (Id) On delete cascade,
 
-	UNIQUE(ClientId, BankId)
+	UNIQUE(ClientId, BankId),
+	CHECK(Balance >= 0)
 );
 go
 
@@ -113,22 +114,23 @@ BEGIN
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
 
-	SELECT @AccountBalance = acc.Balance, @CardsBalance = SUM(bc.Balance)
-	FROM Accounts AS acc
-	JOIN BankCards AS bc ON acc.Id = AccountId
-	WHERE acc.Id = @CurrentAccountID
-	GROUP BY acc.Balance
+		SELECT @AccountBalance = acc.Balance, @CardsBalance = SUM(bc.Balance)
+		FROM Accounts AS acc
+		JOIN BankCards AS bc ON acc.Id = AccountId
+		WHERE acc.Id = @CurrentAccountID
+		GROUP BY acc.Balance
 
-	IF @CardsBalance > @AccountBalance
-	BEGIN
-	   ROLLBACK TRANSACTION
-	   PRINT 'There are not enough funds on the account with id='+ CONVERT(NVARCHAR, @CurrentAccountID) +'. It is not possible to increase the funds on the card.';
-	END
+		IF @CardsBalance > @AccountBalance
+		BEGIN
+		   ROLLBACK TRANSACTION
+		   PRINT 'There are not enough funds on the account with id='+ CONVERT(NVARCHAR, @CurrentAccountID) +'. It is not possible to increase the funds on the card.';
+		END
+
 	 	FETCH NEXT FROM cur INTO @CurrentAccountID
-	   END
+	END
    	   
-	   CLOSE cur
-	   DEALLOCATE cur
+	CLOSE cur
+	DEALLOCATE cur
 END
 GO
 
@@ -200,7 +202,7 @@ SELECT
 	   bc.Id AS 'CardId',
 	   bc.Balance AS 'Balance',
 	   cl.FirstName + ' ' + cl.LastName AS 'ClientName',
-	   b.Name AS 'Bank name'
+	   b.Name AS 'BankName'
 FROM BankCards AS bc
 	JOIN Accounts on Accounts.Id = AccountId
 	JOIN Clients AS cl on cl.Id = ClientId
@@ -210,11 +212,11 @@ GO
 --4 Fourth task
 --Show a list of bank accounts whose balance does not match the amount of the balance on the cards.
 SELECT 
-	   acc.Id AS 'Account id',
-	   acc.Balance As 'Account balance',
-	   COUNT(bc.Balance) As 'Cards count',
-	   IsNull(SUM(bc.Balance), 0) AS 'Cards balance',
-	   IsNull(acc.Balance - SUM(bc.Balance), acc.Balance) AS 'Free balance'
+	   acc.Id AS 'AccountId',
+	   acc.Balance As 'AccountBalance',
+	   COUNT(bc.Balance) As 'CardsCount',
+	   IsNull(SUM(bc.Balance), 0) AS 'CardsBalance',
+	   IsNull(acc.Balance - SUM(bc.Balance), acc.Balance) AS 'FreeBalance'
 FROM BankCards AS bc
 	RIGHT JOIN Accounts AS acc on acc.Id = AccountId
 GROUP BY acc.Id, acc.Balance
@@ -295,7 +297,7 @@ Go
 --Get a list of available funds for each client.
 SELECT 
 	cl.Id AS 'ClientId',
-	COUNT(acc.Id) AS 'Accounts count',
+	COUNT(acc.Id) AS 'AccountsCount',
 	IsNull(IsNull(SUM(acc.Balance) - SUM(bc.Balance), SUM(acc.Balance)),0) AS 'FreeBalance'
 FROM BankCards AS bc
 	RIGHT JOIN Accounts AS acc on acc.Id = AccountId
@@ -355,7 +357,7 @@ SET @TestAccountId = 1
 SET @TestBankCardId = 1
 SET @TestBalance = 1
 
-SELECT acc.Id AS 'AccounId', bc.Id AS 'CardID', bc.Balance AS 'Card balance', acc.Balance AS 'Account balance'
+SELECT acc.Id AS 'AccounId', bc.Id AS 'CardID', bc.Balance AS 'CardBalance', acc.Balance AS 'AccountBalance'
 FROM Accounts AS acc
 JOIN BankCards AS bc
 ON acc.Id = AccountId
@@ -363,7 +365,7 @@ WHERE AccountId = @TestAccountId and bc.Id = @TestBankCardId
 
 EXEC TransferMoney @TestAccountId, @TestBankCardId, @TestBalance;
 
-SELECT acc.Id AS 'AccounId', bc.Id AS 'CardID', bc.Balance AS 'Card balance', acc.Balance AS 'Account balance'
+SELECT acc.Id AS 'AccounId', bc.Id AS 'CardID', bc.Balance AS 'CardBalance', acc.Balance AS 'AccountBalance'
 FROM Accounts AS acc
 JOIN BankCards AS bc ON acc.Id = AccountId
 WHERE AccountId = @TestAccountId and bc.Id = @TestBankCardId
@@ -383,7 +385,7 @@ GROUP BY acc.Id,  acc.Balance
 Having acc.Id = @TestAccountId
 
 Update Accounts
-Set Balance = -100
+Set Balance = 0
 Where Id = @TestAccountId
 Go 
 
@@ -411,6 +413,22 @@ Having acc.Id = @TestAccountId
 Go 
 
 --BankCards update trigger test
+--Wrong
+Declare @TestCardId INT, @TestAccountId INT
+SET @TestCardId = 1
+SET @TestAccountId = (SELECT AccountId FROM BankCards Where Id = @TestCardId)
+
+
+SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+FROM Accounts AS acc 
+JOIN BankCards AS bc ON acc.Id = AccountId
+GROUP BY acc.Id,  acc.Balance
+Having acc.Id = @TestAccountId
+
+Update BankCards
+Set Balance = 10000
+Where Id = @TestCardId
+GO
 --successfully
 Declare @TestCardId INT, @TestAccountId INT
 SET @TestCardId = 1
@@ -432,24 +450,7 @@ JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
 Having acc.Id = @TestAccountId
 Go 
-
---Wrong
-Declare @TestCardId INT, @TestAccountId INT
-SET @TestCardId = 1
-SET @TestAccountId = (SELECT AccountId FROM BankCards Where Id = @TestCardId)
-
-
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
-FROM Accounts AS acc 
-JOIN BankCards AS bc ON acc.Id = AccountId
-GROUP BY acc.Id,  acc.Balance
-Having acc.Id = @TestAccountId
-
-Update BankCards
-Set Balance = 10000
-Where Id = @TestCardId
-GO
 Use master
 GO
 DROP DATABASE BankingSector
-GO
+GO32
