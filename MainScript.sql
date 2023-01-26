@@ -137,7 +137,7 @@ GO
 --Filling the database with data
 DECLARE @OneSideDataCount Int, @ManySideDataCount Int, @Iterator Int
 Set @OneSideDataCount = 5
-Set @ManySideDataCount = 10
+Set @ManySideDataCount = 100
  
 
 begin /*Fill One side tables*/
@@ -450,7 +450,3 @@ JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
 Having acc.Id = @TestAccountId
 Go 
-Use master
-GO
-DROP DATABASE BankingSector
-GO32
