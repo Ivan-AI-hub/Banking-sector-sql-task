@@ -82,21 +82,18 @@ CREATE TRIGGER BalanceValidateUpdateTrigger ON Accounts
 FOR UPDATE
 AS
 BEGIN
-	 IF UPDATE(Balance)
-	 BEGIN
-		 DECLARE @Balance MONEY, @CardsBalance MONEY
-
-		 SELECT @Balance = inserted.Balance, @CardsBalance = SUM(bc.Balance)
-		 FROM inserted 
-		 JOIN BankCards AS bc ON inserted.Id = bc.AccountId
-		 GROUP BY inserted.Balance
-
-		 IF @CardsBalance > @Balance
-		  BEGIN 
-			   ROLLBACK TRANSACTION
-			   PRINT 'There are not enough funds on the account';
-		  END
-	  END
+	IF UPDATE(Balance)
+	BEGIN
+		IF EXISTS (SELECT 1 FROM inserted JOIN BankCards ON inserted.Id = AccountId)
+		BEGIN
+			IF EXISTS (SELECT SUM(bc.Balance) AS 'BCBalance' FROM inserted JOIN BankCards AS bc ON inserted.Id = bc.AccountId 
+					   GROUP BY inserted.Id, inserted.Balance  HAVING inserted.Balance < SUM(bc.Balance))
+			BEGIN 
+				ROLLBACK TRANSACTION
+				PRINT 'There are not enough funds on the account';
+			END
+		END
+	END
 END
 GO
 
@@ -392,23 +389,23 @@ Go
 
 --successfully
 Declare @TestAccountId INT
-SET @TestAccountId = (SELECT TOP(1) acc.Id 
+SET @TestAccountId = (SELECT max(acc.Id)
 					  FROM Accounts AS acc
-					  JOIN BankCards on acc.Id = AccountId)
+					  LEFT JOIN BankCards on acc.Id = AccountId)
 
 SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
 FROM Accounts AS acc 
-JOIN BankCards AS bc ON acc.Id = AccountId
+LEFT JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
 Having acc.Id = @TestAccountId
 
 Update Accounts
-Set Balance = 10000
+Set Balance = 1000
 Where Id = @TestAccountId
 
 SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
 FROM Accounts AS acc 
-JOIN BankCards AS bc ON acc.Id = AccountId
+LEFT JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
 Having acc.Id = @TestAccountId
 Go 
