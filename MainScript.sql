@@ -71,7 +71,8 @@ Create table  BankCards
 	AccountId int not null,
 	Balance money not null,
 
-	CONSTRAINT FK_BankCards_To_Accounts FOREIGN KEY (AccountId)  REFERENCES Accounts (Id) On delete cascade
+	CONSTRAINT FK_BankCards_To_Accounts FOREIGN KEY (AccountId)  REFERENCES Accounts (Id) On delete cascade,
+	CHECK(Balance >= 0)
 );
 go
 
