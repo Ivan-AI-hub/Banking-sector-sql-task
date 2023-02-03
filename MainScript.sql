@@ -57,7 +57,7 @@ Create table  Accounts
 	Balance money not null,
 
 	CONSTRAINT FK_Accounts_To_Banks FOREIGN KEY (BankId)  REFERENCES Banks (Id) On delete cascade,
-	CONSTRAINT FK_Accounts_To_Cities FOREIGN KEY (ClientId)  REFERENCES Clients (Id) On delete cascade,
+	CONSTRAINT FK_Accounts_To_Clients FOREIGN KEY (ClientId)  REFERENCES Clients (Id) On delete cascade,
 
 	UNIQUE(ClientId, BankId),
 	CHECK(Balance >= 0)
