@@ -386,7 +386,7 @@ SET @TestAccountId = (SELECT TOP(1) acc.Id
 					  FROM Accounts AS acc
 					  JOIN BankCards on acc.Id = AccountId)
 
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+SELECT acc.Id, Sum(bc.Balance) AS 'CardBalance', acc.Balance
 FROM Accounts AS acc 
 JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
@@ -403,7 +403,7 @@ SET @TestAccountId = (SELECT max(acc.Id)
 					  FROM Accounts AS acc
 					  LEFT JOIN BankCards on acc.Id = AccountId)
 
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+SELECT acc.Id, Sum(bc.Balance) AS 'CardBalance', acc.Balance
 FROM Accounts AS acc 
 LEFT JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
@@ -427,7 +427,7 @@ SET @TestCardId = 1
 SET @TestAccountId = (SELECT AccountId FROM BankCards Where Id = @TestCardId)
 
 
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+SELECT acc.Id, Sum(bc.Balance) AS 'CardBalance', acc.Balance
 FROM Accounts AS acc 
 JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
@@ -442,7 +442,7 @@ Declare @TestCardId INT, @TestAccountId INT
 SET @TestCardId = 1
 SET @TestAccountId = (SELECT AccountId FROM BankCards Where Id = @TestCardId)
 
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+SELECT acc.Id, Sum(bc.Balance) AS 'CardBalance', acc.Balance
 FROM Accounts AS acc 
 JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
@@ -452,7 +452,7 @@ Update BankCards
 Set Balance = 0
 Where Id = @TestCardId
 
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+SELECT acc.Id, Sum(bc.Balance) AS 'CardBalance', acc.Balance
 FROM Accounts AS acc 
 JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
