@@ -413,7 +413,7 @@ Update Accounts
 Set Balance = 1000
 Where Id = @TestAccountId
 
-SELECT acc.Id, Sum(bc.Balance) AS 'ÑardBalance', acc.Balance
+SELECT acc.Id, Sum(bc.Balance) AS 'CardBalance', acc.Balance
 FROM Accounts AS acc 
 LEFT JOIN BankCards AS bc ON acc.Id = AccountId
 GROUP BY acc.Id,  acc.Balance
